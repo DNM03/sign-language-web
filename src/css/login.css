@@ -1,0 +1,90 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #EEEAEF;
+}
+
+.login-inner {
+  display: flex;
+  flex-direction: row;
+  width: 80%;
+  border-width: 1;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  border-radius: 20px;
+  box-shadow: 0px 16px 32px rgba(0, 0, 0, 0.1);
+  height: 80%;
+}
+
+.login-left-image {
+  display: flex;
+  flex: 6;
+  border-top-left-radius: 20px;
+  border-bottom-left-radius: 20px;
+  padding: 20px;
+  background-image: linear-gradient(to right, #7f32fd, #b937df);
+  height: 100%;
+}
+
+.login-form {
+  display: flex;
+  flex: 4;
+  background-color: white;
+  height: 100%;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.login-input {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.login-button {
+  display: flex;
+  justify-content: center;
+}
+
+.login-enter {
+  width: 300px;
+  height: 50px;
+  border-radius: 5px;
+  border-width: 1px;
+  padding-left: 10px;
+  padding-right: 10px;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  outline: none;
+}
+
+.login-enter:focus {
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+  border: 2px solid transparent;
+  background: linear-gradient(#FFFFFF, #FFFFFF) padding-box,
+    linear-gradient(to right, #7f32fd 0%, #b937df) border-box;
+  border-radius: 5px;
+}
+
+.login-text {
+  background: linear-gradient(to right, #7f32fd 0%, #b937df 100%);
+}
+
+.login-text-2 {
+  background: linear-gradient(to right, #7fcdcd 0%, #804ebd 100%);
+}
+
+.login-text,
+.login-text-2 {
+  display: inline-block;
+  padding: 12px 10px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  height: fit-content;
+}

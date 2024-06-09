@@ -1,0 +1,53 @@
+.practice-inner-left{
+  display: flex;
+  flex-direction: column;
+  flex: 3;
+  border-width: 1;
+  justify-content: flex-start;
+  align-items: stretch;
+  background-color: white;
+  border-radius: 20px;
+  /* box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1); */
+  margin-right: 40px;
+}
+.practice-inner-right{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border-width: 1;
+  justify-content: flex-start;
+  align-items: stretch;
+  background-color: white;
+  border-radius: 20px;
+  /* box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1); */
+  
+}
+.practice-card-front, .practice-card-back{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.1);
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+  height: 580px;
+  background: linear-gradient(to right, #7f32fd 0%, #b937df 100%);
+}
+.circle-background{
+  fill: none;
+  stroke: #ddd;
+}
+.circle-progress{
+  fill: none;
+  /* stroke: #b937df; */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.circle-text{
+  font-size: 3rem;
+  font-weight: bold;
+}

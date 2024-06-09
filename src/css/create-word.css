@@ -1,0 +1,24 @@
+.add-video-button{
+  color: white;
+  width: 200px;
+  outline: none !important;
+  border-radius: 5px;
+}
+.record-video{
+  background-color: #7f32fd;
+}
+.upload-video{
+  background-color: #b937df;
+}
+.record-video:hover{
+  background-color: #6a2cc7;
+}
+.upload-video:hover{
+  background-color: #a02fc3;
+}
+.record-video:focus {
+  box-shadow: 0 0 0 0.2rem rgba(127, 50, 253, 0.5);
+}
+.upload-video:focus {
+  box-shadow: 0 0 0 0.2rem rgba(185, 55, 223, 0.5);
+}

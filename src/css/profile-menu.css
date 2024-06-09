@@ -1,0 +1,56 @@
+.profile-menu-container {
+  border-radius: 5px;
+  background-color: white;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+  width: 250px;
+  top: 15px;
+  right: 15px;
+  z-index: 100;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-top: 20px;
+  padding-left: 20px;
+}
+
+/* .info-text-style {} */
+
+.close-button {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  border: none;
+}
+
+.close-button:focus:not(:hover) {
+  border: none;
+  outline: none;
+}
+
+.close-button:hover {
+  border: none;
+  outline: none;
+}
+
+.close-button:focus {
+  outline: none;
+}
+.icon-label-menu{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.icon-label-menu:hover {
+  background-color: #f2f2f2;
+}
+.icon-label-menu:last-child {
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
