@@ -1,1 +1,1 @@
-'hello', 'thanks', 'iloveyou', 'book','computer'
+'thanks','one','doctor','mother','father','game','morning','noon','you','bye'
