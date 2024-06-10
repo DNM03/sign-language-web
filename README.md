@@ -22,9 +22,7 @@ The ASL Dictionary Web App is a comprehensive platform that allows users to expl
 
 9. **Manage Users**: App administrators can manage user accounts, including approving new user registrations and monitoring user activity.
 
-10. **Manage Words**: Administrators can add, edit, and delete ASL signs in the dictionary, ensuring the content remains accurate and up-to-date.
-
-11. **Sign Recognition**: The app includes a feature that allows users to use their device's camera to capture and recognize ASL signs, providing real-time feedback and suggestions.
+10. **Sign Recognition**: The app includes a feature that allows users to use their device's camera to capture and recognize ASL signs, providing real-time feedback and suggestions.
 
 ## Technology Stack
 
