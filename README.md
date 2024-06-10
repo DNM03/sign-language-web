@@ -1,3 +1,5 @@
+![ASL Dictionary Home Page](https://i.ibb.co/Th86n5G/hompage.png)
+
 # ASL Dictionary Web App
 
 The ASL Dictionary Web App is a comprehensive platform that allows users to explore, practice, and contribute to the world of American Sign Language. With a variety of features, this app aims to be a valuable resource for both ASL learners and experts.
