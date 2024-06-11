@@ -6,9 +6,9 @@ import * as tf from '@tensorflow/tfjs'
 import Loading from '../components/Loading'
 import { searchWord } from '../util/wordService'
 import { getAllTopics } from '../util/topicService'
-import { Holistic } from '@mediapipe/holistic'
-import * as mp_drawing from '@mediapipe/drawing_utils'
-import { Camera } from '@mediapipe/camera_utils'
+// import { Holistic } from '@mediapipe/holistic'
+// import * as mp_drawing from '@mediapipe/drawing_utils'
+// import { Camera } from '@mediapipe/camera_utils'
 
 function Detection() {
   const navigate = useNavigate()
@@ -129,19 +129,19 @@ function Detection() {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height)
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height)
 
-    mp_drawing.drawLandmarks(canvasCtx, results.poseLandmarks, Holistic.POSE_CONNECTIONS, {
+    drawLandmarks(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
       color: '#00FF00',
       lineWidth: 2
     })
-    mp_drawing.drawLandmarks(canvasCtx, results.faceLandmarks, Holistic.FACEMESH_TESSELATION, {
+    drawLandmarks(canvasCtx, results.faceLandmarks, FACEMESH_TESSELATION, {
       color: '#FF0000',
       lineWidth: 1
     })
-    mp_drawing.drawLandmarks(canvasCtx, results.leftHandLandmarks, Holistic.HAND_CONNECTIONS, {
+    drawLandmarks(canvasCtx, results.leftHandLandmarks, HAND_CONNECTIONS, {
       color: '#00FFFF',
       lineWidth: 2
     })
-    mp_drawing.drawLandmarks(canvasCtx, results.rightHandLandmarks, Holistic.HAND_CONNECTIONS, {
+    drawLandmarks(canvasCtx, results.rightHandLandmarks, HAND_CONNECTIONS, {
       color: '#FF00FF',
       lineWidth: 2
     })
@@ -218,6 +218,7 @@ function Detection() {
       stopDetection()
     }
     setIsCollectingFrames(false)
+    setIsDetecting(false)
 
     tf.dispose(model)
     tf.dispose(prediction)
@@ -298,15 +299,15 @@ function Detection() {
           <canvas ref={canvasRef} width='640' height='480' style={{ display: 'none' }} />
           {confidence !== null && (
             <div style={{ fontSize: 20, color: 'black' }}>
-              <strong>Confidence:</strong> <span className='login-text'>{confidence.toFixed(2)}</span>
+              <strong>Confidence:</strong> {confidence && <span className='login-text'>{confidence.toFixed(2)}</span>}
             </div>
           )}
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
             {isCollectingFrames && <div style={{ fontSize: 20 }}>Collecting frames...</div>}
             {isDetecting && <div style={{ fontSize: 20 }}>Detecting...</div>}
           </div>
           <p style={{ fontSize: 20, color: 'black' }}>
-            Detected Gesture: <span className='login-text'>{sentence}</span>
+            Detected Gesture:{sentence!='' && <span className='login-text'>{sentence}</span>}
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
             <div
@@ -318,13 +319,13 @@ function Detection() {
                 width: 500
               }}
             >
-              <button className='btn btn-primary' onClick={startDetection} disabled={camera !== null}>
+              <button style={{width: 150}} className='btn btn-primary' onClick={startDetection} disabled={camera !== null}>
                 Start Detection
               </button>
-              <button className='btn btn-danger' onClick={stopDetection} disabled={camera === null}>
+              <button style={{width: 150}} className='btn btn-danger' onClick={stopDetection} disabled={camera === null}>
                 Stop Detection
               </button>
-              <button className='btn btn-info' onClick={restartDetection}>
+              <button style={{width: 150}} className='btn btn-info' onClick={restartDetection}>
                 Restart Detection
               </button>
             </div>
