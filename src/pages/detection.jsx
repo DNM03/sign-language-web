@@ -6,9 +6,9 @@ import * as tf from '@tensorflow/tfjs'
 import Loading from '../components/Loading'
 import { searchWord } from '../util/wordService'
 import { getAllTopics } from '../util/topicService'
-import { Holistic } from '@mediapipe/holistic'
+//import { Holistic } from '@mediapipe/holistic'
 import * as mp_drawing from '@mediapipe/drawing_utils'
-import { Camera } from '@mediapipe/camera_utils'
+//import { Camera } from '@mediapipe/camera_utils'
 
 function Detection() {
   const navigate = useNavigate()
