@@ -7,7 +7,7 @@ import Loading from '../components/Loading'
 import { searchWord } from '../util/wordService'
 import { getAllTopics } from '../util/topicService'
 //import { Holistic } from '@mediapipe/holistic'
-import * as mp_drawing from '@mediapipe/drawing_utils'
+//import * as mp_drawing from '@mediapipe/drawing_utils'
 //import { Camera } from '@mediapipe/camera_utils'
 
 function Detection() {
@@ -129,19 +129,19 @@ function Detection() {
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height)
     canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height)
 
-    mp_drawing.drawLandmarks(canvasCtx, results.poseLandmarks, Holistic.POSE_CONNECTIONS, {
+    drawLandmarks(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
       color: '#00FF00',
       lineWidth: 2
     })
-    mp_drawing.drawLandmarks(canvasCtx, results.faceLandmarks, Holistic.FACEMESH_TESSELATION, {
+    drawLandmarks(canvasCtx, results.faceLandmarks, FACEMESH_TESSELATION, {
       color: '#FF0000',
       lineWidth: 1
     })
-    mp_drawing.drawLandmarks(canvasCtx, results.leftHandLandmarks, Holistic.HAND_CONNECTIONS, {
+    drawLandmarks(canvasCtx, results.leftHandLandmarks, HAND_CONNECTIONS, {
       color: '#00FFFF',
       lineWidth: 2
     })
-    mp_drawing.drawLandmarks(canvasCtx, results.rightHandLandmarks, Holistic.HAND_CONNECTIONS, {
+    drawLandmarks(canvasCtx, results.rightHandLandmarks, HAND_CONNECTIONS, {
       color: '#FF00FF',
       lineWidth: 2
     })
