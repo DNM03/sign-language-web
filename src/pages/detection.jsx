@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -6,20 +6,28 @@ import * as tf from '@tensorflow/tfjs'
 import Loading from '../components/Loading'
 import { searchWord } from '../util/wordService'
 import { getAllTopics } from '../util/topicService'
+import { Holistic } from '@mediapipe/holistic'
+import * as mp_drawing from '@mediapipe/drawing_utils'
+import { Camera } from '@mediapipe/camera_utils'
 
 function Detection() {
-  const { isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const accountRef = useRef(null)
   const [openProfile, setOpenProfile] = useState(false)
-  const [cameraActive, setCameraActive] = useState(false)
-  const [stream, setStream] = useState(null)
-  const [model, setModel] = useState(null)
-  const [gesture, setGesture] = useState('')
+  const [holistic, setHolistic] = useState(null)
+  const [sentence, setSentence] = useState([])
+  const [camera, setCamera] = useState(null)
+
+  const [confidence, setConfidence] = useState(null)
+  const topPredict = useRef(new Map())
+  const [isCollectingFrames, setIsCollectingFrames] = useState(false)
+  const [isDetecting, setIsDetecting] = useState(false)
+  let counter = 0
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  const [labels, setLabels] = useState([])
-  const [isPredicting, setIsPredicting] = useState(false)
+  const cameraRef = useRef(null)
+  const actions = ['thanks', 'one', 'doctor', 'mother', 'father', 'game', 'morning', 'noon', 'you', 'bye'] // Replace with actual actions
+  const threshold = 0.8
   useEffect(() => {
     const handleScroll = () => {
       if (accountRef.current) {
@@ -35,214 +43,191 @@ function Detection() {
   }, [openProfile])
 
   useEffect(() => {
-    // Load the model
-    const loadModel = async () => {
-      try {
-        console.log('Load Model')
-        const model = await tf.loadLayersModel('/model_tfjs/model.json')
-        setModel(model)
-        console.log('Model loaded')
-      } catch (error) {
-        console.error('Error loading the model:', error)
-        throw error
+    localStorage.removeItem('sequence')
+    const holisticInstance = new Holistic({
+      locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`
+      }
+    })
+
+    holisticInstance.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    })
+
+    holisticInstance.onResults(onResults)
+
+    setHolistic(holisticInstance)
+
+    return () => {
+      if (camera) {
+        camera.stop()
       }
     }
-    loadModel()
-    // Load the labels
-    const loadLabels = async () => {
-      try {
-        const response = await fetch('/label_map.txt')
-        const text = await response.text()
-        const labelsArray = text
-          .split(',')
-          .map((label) => label.trim().slice(1, label.length - 1))
-          .filter((label) => label)
-        console.log(labelsArray)
-        setLabels(labelsArray)
-      } catch (error) {
-        console.error('Error loading the labels:', error)
-        throw error
-      }
-    }
-    loadLabels()
   }, [])
 
-  useEffect(() => {
-    // Load the model
-    const loadModel = async () => {
-      try {
-        console.log("Load Model");
-        const model = await tf.loadLayersModel("/model_tfjs/model.json");
-        setModel(model);
-      } catch (error) {
-        console.error("Error loading the model:", error);
-        throw error;
-      }
-    };
-    loadModel();
-    // Load the labels
-    const loadLabels = async () => {
-      try {
-        const response = await fetch("/label_map.txt");
-        const text = await response.text();
-        const labelsArray = text
-          .split(",")
-          .map((label) => label.trim().slice(1, label.length - 1))
-          .filter((label) => label);
-        console.log(labelsArray);
-        setLabels(labelsArray);
-      } catch (error) {
-        console.error("Error loading the labels:", error);
-        throw error;
-      }
-    };
-    loadLabels();
-  }, []);
-
-  useEffect(() => {
-    // Set up the webcam
-    const setupCamera = async () => {
-      if (navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        videoRef.current.srcObject = stream;
-        videoRef.current.addEventListener("loadeddata", () => {
-          const loadModel = async () => {
-            try {
-              console.log("Load Model");
-              if (!model) {
-                const model = await tf.loadLayersModel("/model_tfjs/model.json");
-
-                setModel(model);
-                predictGesture(model);
-              } else {
-                predictGesture(model);
-              }
-            } catch (error) {
-              console.error("Error loading the model:", error);
-              throw error;
-            }
-          };
-          loadModel();
-          // predictGesture()
-        });
-      }
-    };
-  
-      setupCamera();
-    
-  }, [isPredicting])
-
-  const predictGesture = async (model) => {
-    console.log(isPredicting);
-    if(isPredicting==false) return;
-    const topPredict = new Map();
-    if (!model) {
-      console.log("Model not loaded yet");
-      return;
+  const startDetection = () => {
+    counter = 0
+    if (videoRef.current) {
+      const newCamera = new Camera(videoRef.current, {
+        onFrame: async () => {
+          await holistic.send({ image: videoRef.current })
+        },
+        width: 1280,
+        height: 720
+      })
+      newCamera.start()
+      cameraRef.current = newCamera
+      setCamera(newCamera)
+      setIsCollectingFrames(true)
     }
-    console.log("Predicting gesture...");
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+  }
 
-    const sequenceLength = 30; // Number of frames in each sequence
-    const frameSequence = [];
-
-    // Function to preprocess frame
-    const preprocessFrame = (ctx, video) => {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const tensor = tf.browser
-        .fromPixels(imageData)
-        .resizeNearestNeighbor([32, 32])
-        .toFloat();
-      // Resize to 32x32
-      const flattened = tensor.reshape([32 * 32 * 3]); // Flatten to 1D vector
-
-      // Dimensionality reduction to match 1662 features
-      const reduced = tf.layers
-        .dense({ units: 1662, activation: "relu" })
-        .apply(flattened.expandDims(0));
-      return reduced.squeeze();
-    };
-
-    // Continuously capture frames and make predictions
-    const predictFrame = async () => {
-      if (!model || !videoRef.current) return;
-
-      const frameTensor = preprocessFrame(ctx, video);
-      frameSequence.push(frameTensor);
-      // console.log("Frame sequence length: ", frameSequence.length);
-      if (frameSequence.length > sequenceLength) {
-        frameSequence.shift(); // Maintain the sequence length
-      }
-
-      if (frameSequence.length === sequenceLength) {
-        const sequenceTensor = tf.stack(frameSequence).expandDims(0); // Shape: [1, sequenceLength, 1662]
-        const prediction = model.predict(sequenceTensor);
-        const predictionData = await prediction.data(); // Get the prediction probabilities
-        const predictedIndex = prediction.argMax(-1).dataSync()[0];
-        const predictionConfidence = predictionData[predictedIndex];
-        // Use labels array to map predicted index to the corresponding gesture
-        if (predictionConfidence > 0.8) {
-          console.log("label: " + labels);
-          console.log("index: " + predictedIndex);
-          console.log("word: " + labels[predictedIndex]);
-          console.log("confidence: " + predictionConfidence);
-          console.log("top predict: ", topPredict);
-
-          let numOfDetect = 0;
-          for (let [key, value] of topPredict) {
-            numOfDetect += value;
-          }
-          if (numOfDetect < 20) {
-            if (topPredict.has(predictedIndex)) {
-              topPredict.set(
-                predictedIndex,
-                topPredict.get(predictedIndex) + 1
-              );
-            } else {
-              topPredict.set(predictedIndex, 1);
-            }
-          } else {
-            let max = 0;
-            let top = 0;
-            for (let [key, value] of topPredict) {
-              if (value > max) {
-                max = value;
-                top = key;
-              }
-            }
-            setGesture(labels[top]);
-            topPredict.clear();
-            setIsPredicting(false);
-            tf.dispose([
-              sequenceTensor,
-              prediction,
-              predictionData,
-              predictedIndex,
-              predictionConfidence,
-              frameSequence,
-              frameTensor,
-            ]);
-            return;
-          }
+  const stopDetection = useCallback(() => {
+    console.log('stop3')
+    if (cameraRef.current) {
+      console.log('camera stop')
+      let max = 0
+      let top = 0
+      for (let [key, value] of topPredict.current) {
+        if (value > max) {
+          max = value
+          top = key
         }
       }
-
-      requestAnimationFrame(predictFrame);
-    };
-
-    predictFrame();
-    
-  };
-
-  const handleButtonClick = (event) => {
-    event.preventDefault()
-    setIsPredicting((prevState) => !prevState)
+      setSentence(actions[top])
+      cameraRef.current.stop()
+      cameraRef.current = null
+      camera.stop()
+      setCamera(null)
+      setIsCollectingFrames(false)
+      setIsDetecting(false)
+    }
+  }, [camera])
+  const restartDetection = () => {
+    counter = 0
+    stopDetection()
+    localStorage.removeItem('sequence')
+    setSentence([])
+    // setTopPredict(new Map());
+    topPredict.current.clear()
+    setIsCollectingFrames(false)
+    setIsDetecting(false)
+    setConfidence(null)
+    startDetection()
   }
+
+  const onResults = async (results) => {
+    console.log('Length: ' + sentence.length)
+    const canvasElement = canvasRef.current
+    const canvasCtx = canvasElement.getContext('2d')
+
+    canvasCtx.save()
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height)
+    canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height)
+
+    mp_drawing.drawLandmarks(canvasCtx, results.poseLandmarks, Holistic.POSE_CONNECTIONS, {
+      color: '#00FF00',
+      lineWidth: 2
+    })
+    mp_drawing.drawLandmarks(canvasCtx, results.faceLandmarks, Holistic.FACEMESH_TESSELATION, {
+      color: '#FF0000',
+      lineWidth: 1
+    })
+    mp_drawing.drawLandmarks(canvasCtx, results.leftHandLandmarks, Holistic.HAND_CONNECTIONS, {
+      color: '#00FFFF',
+      lineWidth: 2
+    })
+    mp_drawing.drawLandmarks(canvasCtx, results.rightHandLandmarks, Holistic.HAND_CONNECTIONS, {
+      color: '#FF00FF',
+      lineWidth: 2
+    })
+
+    canvasCtx.restore()
+
+    const keypoints = extractKeypoints(results)
+    const sequence = updateSequence(keypoints)
+    if (sequence.length === 30) {
+      setIsDetecting(true)
+      // setIsCollectingFrames(false)
+
+      console.log('counter: ', counter)
+      if (counter >= 10) {
+        console.log('stop1')
+
+        stopDetection()
+      }
+
+      makePrediction(sequence)
+    }
+  }
+
+  const extractKeypoints = (results) => {
+    const pose = results.poseLandmarks
+      ? results.poseLandmarks.flatMap((landmark) => [landmark.x, landmark.y, landmark.z, landmark.visibility])
+      : new Array(33 * 4).fill(0)
+    const face = results.faceLandmarks
+      ? results.faceLandmarks.flatMap((landmark) => [landmark.x, landmark.y, landmark.z])
+      : new Array(468 * 3).fill(0)
+    const lh = results.leftHandLandmarks
+      ? results.leftHandLandmarks.flatMap((landmark) => [landmark.x, landmark.y, landmark.z])
+      : new Array(21 * 3).fill(0)
+    const rh = results.rightHandLandmarks
+      ? results.rightHandLandmarks.flatMap((landmark) => [landmark.x, landmark.y, landmark.z])
+      : new Array(21 * 3).fill(0)
+    return [...pose, ...face, ...lh, ...rh]
+  }
+
+  const updateSequence = (keypoints) => {
+    let sequence = JSON.parse(localStorage.getItem('sequence')) || []
+    sequence.push(keypoints)
+    sequence = sequence.slice(-30)
+    localStorage.setItem('sequence', JSON.stringify(sequence))
+    return sequence
+  }
+
+  const makePrediction = async (sequence) => {
+    const model = await tf.loadLayersModel('/model_tfjs/model.json')
+    const prediction = model.predict(tf.tensor([sequence]))
+    const res = prediction.dataSync()
+    const actionIndex = res.indexOf(Math.max(...res))
+    const actionConfidence = res[actionIndex]
+
+    setConfidence(actionConfidence)
+    console.log('label: ' + actions)
+    console.log('index: ' + actionIndex)
+    console.log('word: ' + actions[actionIndex])
+    console.log('confidence: ' + actionConfidence)
+    console.log('top predict: ', topPredict)
+    if (actionConfidence > threshold) {
+      const action = actions[actionIndex]
+      if (topPredict.current.has(actionIndex)) {
+        topPredict.current.set(actionIndex, topPredict.current.get(actionIndex) + 1)
+      } else {
+        topPredict.current.set(actionIndex, 1)
+      }
+      counter++
+    }
+
+    console.log('counter: ', counter)
+    if (counter >= 10) {
+      console.log('stop2')
+      stopDetection()
+    }
+    setIsCollectingFrames(false)
+
+    tf.dispose(model)
+    tf.dispose(prediction)
+    tf.dispose(res)
+    tf.dispose(actionIndex)
+  }
+
+  // const handleButtonClick = (event) => {
+  //   event.preventDefault()
+  //   setIsPredicting((prevState) => !prevState)
+  // }
 
   const [topic, setTopic] = useState([])
   const fetchTopics = async () => {
@@ -261,55 +246,22 @@ function Detection() {
   }, [])
 
   const handleViewDetail = async (event) => {
-    event.preventDefault();
-    try{
-      const response = await searchWord({ keyword: gesture })
-      console.log(response.result.words[0]);
-      const data = { wordData: response.result.words[0], topic: topic.find((topic) => topic._id === response.result.words[0].topic) }
-      console.log(data);
+    event.preventDefault()
+    try {
+      const response = await searchWord({ keyword: sentence })
+      console.log(response.result.words[0])
+      const data = {
+        wordData: response.result.words[0],
+        topic: topic.find((topic) => topic._id === response.result.words[0].topic)
+      }
+      console.log(data)
       navigate(`/word-detail/${response.result.words[0]._id}`, { state: data })
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error fetching word:', error.response)
       alert('Cannot find word')
     }
   }
 
-  if (!model) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0, transition: { duration: 0.1 } }}
-      >
-        <section className='banner-area'>
-          <div className='container'>
-            <div className='row justify-content-center align-items-center'>
-              <div className='col-lg-12 banner-right'>
-                <h1 className='text-white'>Detection</h1>
-                <p className='mx-auto text-white  mt-20 mb-40'></p>
-                <div className='link-nav'>
-                  <span className='box'>
-                    <a href='index.html'>Home </a>
-                    <i className='lnr lnr-arrow-right'></i>
-                    <a href='about.html'>Detection</a>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className='section-gap'>
-          <div
-            className='info-container'
-            style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}
-          >
-            <Loading />
-          </div>
-        </section>
-      </motion.div>
-    )
-  }
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.1 } }}>
       <section className='banner-area'>
@@ -343,16 +295,43 @@ function Detection() {
             // style={{ display: cameraActive ? 'block' : 'none' }}
           />
           <canvas ref={canvasRef} width='640' height='480' style={{ display: 'none' }} />
+          {confidence !== null && (
+            <div style={{ fontSize: 20, color: 'black' }}>
+              <strong>Confidence:</strong> <span className='login-text'>{confidence.toFixed(2)}</span>
+            </div>
+          )}
+          <div>
+            {isCollectingFrames && <div style={{ fontSize: 20 }}>Collecting frames...</div>}
+            {isDetecting && <div style={{ fontSize: 20 }}>Detecting...</div>}
+          </div>
           <p style={{ fontSize: 20, color: 'black' }}>
-            Detected Gesture: <span className='login-text'>{gesture}</span>
+            Detected Gesture: <span className='login-text'>{sentence}</span>
           </p>
-          <div >
-            <button style={{marginRight: 30}} onClick={handleButtonClick} className='btn btn-primary'>
-              {isPredicting ? 'Stop Predicting' : 'Start Predicting'}
-            </button>
-            <button onClick={handleViewDetail} className='btn btn-success'>
-              View Detail
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                width: 500
+              }}
+            >
+              <button className='btn btn-primary' onClick={startDetection} disabled={camera !== null}>
+                Start Detection
+              </button>
+              <button className='btn btn-danger' onClick={stopDetection} disabled={camera === null}>
+                Stop Detection
+              </button>
+              <button className='btn btn-info' onClick={restartDetection}>
+                Restart Detection
+              </button>
+            </div>
+            <div style={{ marginTop: 20 }}>
+              <button className='btn btn-success' onClick={handleViewDetail}>
+                View Detail
+              </button>
+            </div>
           </div>
         </div>
       </section>

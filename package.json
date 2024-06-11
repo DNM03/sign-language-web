@@ -13,6 +13,9 @@
     "prettier:fix": "prettier --write \"src/**/(*.jsx|*.js|*.css|*.scss)\""
   },
   "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/holistic": "^0.5.1675471629",
     "@tensorflow/tfjs": "^4.20.0",
     "axios": "^1.7.2",
     "bootstrap": "^4.1.3",
