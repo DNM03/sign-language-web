@@ -87,6 +87,7 @@ function Detection() {
 
   const stopDetection = useCallback(() => {
     console.log('stop3')
+    counter = 0;
     if (cameraRef.current) {
       console.log('camera stop')
       let max = 0
@@ -100,12 +101,12 @@ function Detection() {
       setSentence(actions[top])
       cameraRef.current.stop()
       cameraRef.current = null
-      camera.stop()
+      // camera.stop()
       setCamera(null)
       setIsCollectingFrames(false)
       setIsDetecting(false)
     }
-  }, [camera])
+  }, [cameraRef])
   const restartDetection = () => {
     counter = 0
     stopDetection()
